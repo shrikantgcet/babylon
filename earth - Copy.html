@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset = "utf-8">
+      <title>BabylonJs - Basic Element-Creating Scene</title>
+      <script src="https://preview.babylonjs.com/babylon.js"></script>
+	  <script src="https://cdn.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+	  
+      <style>
+         canvas {width: 100%; height: 100%;}
+      </style>
+   </head>
+
+   <body>
+      <canvas id = "renderCanvas"></canvas>
+      <script type = "text/javascript">
+         var canvas = document.getElementById("renderCanvas");
+         var engine = new BABYLON.Engine(canvas, true);
+         
+         var createScene = function () {
+
+    // This creates a basic Babylon Scene object (non-mesh)
+    var scene = new BABYLON.Scene(engine);
+	
+	
+	
+		var url = "https://cdn.rawgit.com/NasimiAsl/Extensions/master/ShaderBuilder/Babylonx.ShaderBuilder.js";
+		var s = document.createElement("script");
+		s.src = url;
+		document.head.appendChild(s);
+		scene.clearColor = new BABYLON.Vector4(0.01,0.01,0.01,1.);
+		s.onload = function (params) {
+		BABYLONX.ShaderBuilder.InitializeEngine();
+
+        var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {diameter:1500}, scene);
+		 
+		sphere.material = new BABYLONX.ShaderBuilder().Transparency().InLine('\
+            \
+            vec3 pos_new = r_y(pos,time*0.01,vec3(0.));\
+            pos_new = r_x(pos_new,time*0.01,vec3(0.));\
+            pos_new = r_z(pos_new,time*0.01,vec3(0.));\
+            float ns1 = sin(pos_new.x+tan(sin(pos_new.z)))*noise(pos_new*0.1+vec3(time*0.001,0.,0.))*cos(pos_new.y-tan(sin(pos_new.z))); \
+            float ns2 = (noise(pos_new*0.1)+0.8)*sin(0.2*pos_new.x+tan(sin(0.1*pos_new.z)))*noise(pos_new*0.1)*cos(0.2*pos_new.y-tan(sin(0.2*pos_new.z))); \
+            result = vec4(vec3(1.),pow(ns1+ns2,4.)*4.);\
+            \
+            ')
+        .Back()
+        .BuildMaterial(scene); 
+ 
+
+	}
+	
+	
+	 
+    // This creates and positions a free camera (non-mesh)
+    var camera = new BABYLON.ArcRotateCamera("camera1", Math.PI / 4, Math.PI / 4, 8, BABYLON.Vector3(0, 1, 0), scene);
+var planetAxis = new BABYLON.Vector3(Math.sin(23 * Math.PI/180), Math.cos(23 * Math.PI/180), 0);
+    // This targets the camera to scene origin
+    camera.setTarget(BABYLON.Vector3.Zero());
+
+    // This attaches the camera to the canvas
+    camera.attachControl(canvas, true);
+
+    // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
+    var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+
+    // Default intensity is 1. Let's dim the light a small amount
+    light.intensity = 0.7;
+
+    //var saturn = BABYLON.Mesh.CreateSphere("sphere1", 16, 21, scene);
+
+    // Material
+    
+    //var rings = BABYLON.Mesh.CreatePlane("rings", 5, scene);
+    //rings.rotation.x = Math.PI / 2;
+    //rings.parent = saturn
+    //rings.material = materialAmiga;
+
+
+
+
+// test sun
+			
+	sunFresnel = BABYLON.Mesh.CreateSphere("SunFresnel", 32, 5.9, scene);
+    sunFresnel.position = new BABYLON.Vector3(1.6, 1.1, 0);
+
+    var sunFresnelMaterial = new BABYLON.StandardMaterial("SunFresnelMaterial", scene);
+    sunFresnelMaterial.emissiveColor = BABYLON.Color3.White();
+    sunFresnelMaterial.alpha = 0.7;
+    sunFresnelMaterial.alphaMode = BABYLON.Engine.ALPHA_ADD;
+
+    // Fresnel
+    sunFresnelMaterial.emissiveFresnelParameters = new BABYLON.FresnelParameters();
+    sunFresnelMaterial.emissiveFresnelParameters.bias = 0.05;
+    sunFresnelMaterial.emissiveFresnelParameters.power = 1;
+    sunFresnelMaterial.emissiveFresnelParameters.leftColor = BABYLON.Color3.Yellow();
+    sunFresnelMaterial.emissiveFresnelParameters.rightColor = BABYLON.Color3.Black();
+
+    sunFresnel.material = sunFresnelMaterial;
+
+    BABYLON.SceneLoader.ImportMesh("SunLoPoly", "https://david.azureedge.net/babylonjs/banner/", "sun.babylon", scene, function(newMeshes, particleSystems, skeletons) {
+        sun = newMeshes[0];
+        sun.scaling = new BABYLON.Vector3(8.25, 8.25, 8.25);
+        sun.position = new BABYLON.Vector3(1.6, 1.1, 0);
+        sun.material.emissiveColor = new BABYLON.Color3(0.8, 0.8, 0.8);
+    });
+
+			//test sun 
+			
+			
+			//Mercury
+			var mercuryVar= new BABYLON.TransformNode("root");
+			var mercury = new BABYLON.StandardMaterial("mercury", scene);
+            //mercury.diffuseTexture = new BABYLON.Texture("", scene);
+			var mercurySpeed=0;
+            var mercurySphere = BABYLON.Mesh.CreateSphere("mercury", 0, 1, scene);
+			//Actual Size
+			//var mercurySphere = BABYLON.Mesh.CreateSphere("mercury", 0, 0.002439, scene);
+            //sphere.setPivotMatrix(BABYLON.Matrix.Translation(0, 0, 0));
+            mercurySphere.material = mercury;		
+			//mercurySphere.position.x = -7;
+			mercurySphere.position.x = -3;
+            mercurySphere.position.y = 0;	
+            mercurySphere.position.z = 2.5;
+			mercurySphere.parent=mercuryVar;
+			
+			
+			
+   
+			var y = 0;
+			var angle=0.01;
+		
+		scene.registerBeforeRender(function () {
+		
+			mercurySphere.rotate(planetAxis, angle, BABYLON.Space.WORLD);
+			mercuryVar.rotation.y = mercurySpeed;
+			mercurySpeed+=0.018;
+		
+		})
+	
+	
+	
+		
+    // Move the sphere upward 1/2 its height
+    //saturn.position.y = 1;
+    return scene;
+
+
+         };
+         var scene = createScene();
+         engine.runRenderLoop(function() {
+            scene.render();
+         });
+      </script>
+   </body>
+</html>
